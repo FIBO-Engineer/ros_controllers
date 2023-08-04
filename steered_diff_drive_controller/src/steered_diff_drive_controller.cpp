@@ -148,6 +148,8 @@ namespace steered_diff_drive_controller
 
 SteeredDiffDriveController::SteeredDiffDriveController()
   : open_loop_(false)
+  , use_steering_tolerance_(false)
+  , steering_tolerance_(0.1)
   , command_struct_()
   , wheel_separation_(0.0)
   , wheel_radius_(0.0)
@@ -173,9 +175,10 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
   name_ = complete_ns.substr(id + 1);
 
   // Get joint names from the parameter server
-  std::vector<std::string> left_wheel_names, right_wheel_names;
+  std::vector<std::string> left_wheel_names, right_wheel_names, steering_wheel_names;
   if (!getWheelNames(controller_nh, "left_wheel", left_wheel_names) ||
-      !getWheelNames(controller_nh, "right_wheel", right_wheel_names))
+      !getWheelNames(controller_nh, "right_wheel", right_wheel_names) ||
+      !getWheelNames(controller_nh, "steering_wheel", right_wheel_names))
   {
     return false;
   }
@@ -193,6 +196,7 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
     left_wheel_joints_.resize(wheel_joints_size_);
     right_wheel_joints_.resize(wheel_joints_size_);
   }
+  steering_wheel_joints_.resize(steering_wheel_names.size());
 
   // Odometry related:
   double publish_rate;
@@ -201,6 +205,8 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
   publish_period_ = ros::Duration(1.0 / publish_rate);
 
   controller_nh.param("open_loop", open_loop_, open_loop_);
+  controller_nh.param("use_steering_tolerance", use_steering_tolerance_, use_steering_tolerance_);
+  controller_nh.param("steering_tolerance", steering_tolerance_, steering_tolerance_);
 
   controller_nh.param("wheel_separation_multiplier", wheel_separation_multiplier_, wheel_separation_multiplier_);
   ROS_INFO_STREAM_NAMED(name_, "Wheel separation will be multiplied by " << wheel_separation_multiplier_ << ".");
@@ -283,9 +289,11 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
   // If either parameter is not available, we need to look up the value in the URDF
   bool lookup_wheel_separation = !controller_nh.getParam("wheel_separation", wheel_separation_);
   bool lookup_wheel_radius = !controller_nh.getParam("wheel_radius", wheel_radius_);
+  // Use negative `steering_wheel_length` for rear steering mechanism
+  bool lookup_steering_wheel_length = !controller_nh.getParam("steering_wheel_length", steering_wheel_length_);
 
-  if (!setOdomParamsFromUrdf(root_nh, left_wheel_names[0], right_wheel_names[0], lookup_wheel_separation,
-                             lookup_wheel_radius))
+  if (!setOdomParamsFromUrdf(root_nh, left_wheel_names[0], right_wheel_names[0], steering_wheel_names[0],
+                             lookup_wheel_separation, lookup_wheel_radius, lookup_steering_wheel_length))
   {
     return false;
   }
@@ -334,6 +342,7 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
     {
       controller_state_pub_->msg_.joint_names[i] = left_wheel_names[i];
       controller_state_pub_->msg_.joint_names[i + wheel_joints_size_] = right_wheel_names[i];
+      controller_state_pub_->msg_.joint_names[i + 2 * wheel_joints_size_] = steering_wheel_names[i];
     }
 
     vel_left_previous_.resize(wheel_joints_size_, 0.0);
@@ -348,8 +357,9 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
     ROS_INFO_STREAM_NAMED(name_, "Adding left wheel with joint name: " << left_wheel_names[i]
                                                                        << " and right wheel with joint name: "
                                                                        << right_wheel_names[i]);
-    left_wheel_joints_[i] = hw->getHandle(left_wheel_names[i]);    // throws on failure
-    right_wheel_joints_[i] = hw->getHandle(right_wheel_names[i]);  // throws on failure
+    left_wheel_joints_[i] = hw->getHandle(left_wheel_names[i]);          // throws on failure
+    right_wheel_joints_[i] = hw->getHandle(right_wheel_names[i]);        // throws on failure
+    steering_wheel_joints_[i] = hw->getHandle(steering_wheel_names[i]);  // throws on failure
   }
 
   sub_command_ = controller_nh.subscribe("cmd_vel", 1, &SteeredDiffDriveController::cmdVelCallback, this);
@@ -489,12 +499,33 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   // Compute wheels velocities:
   const double vel_left = (curr_cmd.lin - curr_cmd.ang * ws / 2.0) / lwr;
   const double vel_right = (curr_cmd.lin + curr_cmd.ang * ws / 2.0) / rwr;
+  const double pos_steering = atan2(steering_wheel_length_ * curr_cmd.ang, curr_cmd.lin);
 
   // Set wheels velocities:
-  for (size_t i = 0; i < wheel_joints_size_; ++i)
+  // BIG TODO: Should wait for wheel to be within tolerance before moving
+
+  double curr_steering_angle = 0.0;
+  for (size_t i = 0; i < steering_wheel_joints_.size(); i++)
   {
-    left_wheel_joints_[i].setCommand(vel_left);
-    right_wheel_joints_[i].setCommand(vel_right);
+    curr_steering_angle += steering_wheel_joints_[i].getPosition();
+  }
+  curr_steering_angle /= steering_wheel_joints_.size();
+
+  if (use_steering_tolerance_ && abs(curr_steering_angle - pos_steering) > steering_tolerance_)
+  {
+    for (size_t i = 0; i < wheel_joints_size_; ++i)
+    {
+      steering_wheel_joints_[i].setCommand(pos_steering);
+    }
+  }
+  else
+  {
+    for (size_t i = 0; i < wheel_joints_size_; ++i)
+    {
+      left_wheel_joints_[i].setCommand(vel_left);
+      right_wheel_joints_[i].setCommand(vel_right);
+      steering_wheel_joints_[i].setCommand(pos_steering);
+    }
   }
 
   publishWheelData(time, period, curr_cmd, ws, lwr, rwr);
@@ -610,7 +641,9 @@ bool SteeredDiffDriveController::getWheelNames(ros::NodeHandle& controller_nh, c
 
 bool SteeredDiffDriveController::setOdomParamsFromUrdf(ros::NodeHandle& root_nh, const std::string& left_wheel_name,
                                                        const std::string& right_wheel_name,
-                                                       bool lookup_wheel_separation, bool lookup_wheel_radius)
+                                                       const std::string& steering_wheel_name,
+                                                       bool lookup_wheel_separation, bool lookup_wheel_radius,
+                                                       bool lookup_steering_wheel_length)
 {
   if (!(lookup_wheel_separation || lookup_wheel_radius))
   {
@@ -632,6 +665,7 @@ bool SteeredDiffDriveController::setOdomParamsFromUrdf(ros::NodeHandle& root_nh,
 
   urdf::JointConstSharedPtr left_wheel_joint(model->getJoint(left_wheel_name));
   urdf::JointConstSharedPtr right_wheel_joint(model->getJoint(right_wheel_name));
+  urdf::JointConstSharedPtr steering_wheel_joint(model->getJoint(steering_wheel_name));
 
   if (!left_wheel_joint)
   {
@@ -642,6 +676,12 @@ bool SteeredDiffDriveController::setOdomParamsFromUrdf(ros::NodeHandle& root_nh,
   if (!right_wheel_joint)
   {
     ROS_ERROR_STREAM_NAMED(name_, right_wheel_name << " couldn't be retrieved from model description");
+    return false;
+  }
+
+  if (!steering_wheel_joint)
+  {
+    ROS_ERROR_STREAM_NAMED(name_, steering_wheel_name << " couldn't be retrieved from model description");
     return false;
   }
 
@@ -667,6 +707,11 @@ bool SteeredDiffDriveController::setOdomParamsFromUrdf(ros::NodeHandle& root_nh,
       ROS_ERROR_STREAM_NAMED(name_, "Couldn't retrieve " << left_wheel_name << " wheel radius");
       return false;
     }
+  }
+
+  if (lookup_steering_wheel_length)
+  {
+    // TODO
   }
 
   return true;

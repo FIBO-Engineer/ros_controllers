@@ -111,6 +111,7 @@ private:
   /// Hardware handles:
   std::vector<hardware_interface::JointHandle> left_wheel_joints_;
   std::vector<hardware_interface::JointHandle> right_wheel_joints_;
+  std::vector<hardware_interface::JointHandle> steering_wheel_joints_;
 
   // Previous time
   ros::Time time_previous_;
@@ -155,6 +156,15 @@ private:
 
   /// Wheel radius (assuming it's the same for the left and right wheels):
   double wheel_radius_;
+
+  /// Should differential drive move after the wheel has steered
+  bool use_steering_tolerance_;
+
+  /// And, within which bound
+  double steering_tolerance_;
+
+  // Distance from front pair of wheels to the rear steering wheel
+  double steering_wheel_length_;
 
   /// Wheel separation and radius calibration multipliers:
   double wheel_separation_multiplier_;
@@ -272,8 +282,8 @@ private:
    * \param right_wheel_name Name of the right wheel joint
    */
   bool setOdomParamsFromUrdf(ros::NodeHandle& root_nh, const std::string& left_wheel_name,
-                             const std::string& right_wheel_name, bool lookup_wheel_separation,
-                             bool lookup_wheel_radius);
+                             const std::string& right_wheel_name, const std::string& steering_wheel_name,
+                             bool lookup_wheel_separation, bool lookup_wheel_radius, bool lookup_steering_wheel_length);
 
   /**
    * \brief Sets the odometry publishing fields
