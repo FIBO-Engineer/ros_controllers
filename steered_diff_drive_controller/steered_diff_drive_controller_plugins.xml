@@ -1,0 +1,9 @@
+<library path="libsteered_diff_drive_controller">
+
+  <class name="steered_diff_drive_controller/SteeredDiffDriveController" type="steered_diff_drive_controller::SteeredDiffDriveController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      The SteeredDiffDriveController tracks velocity commands. It expects 2 VelocityJointInterface type and 1 PositionJointInterface type of hardware interfaces.
+    </description>
+  </class>
+
+</library>
