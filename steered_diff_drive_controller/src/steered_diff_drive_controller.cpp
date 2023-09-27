@@ -167,9 +167,17 @@ SteeredDiffDriveController::SteeredDiffDriveController()
 {
 }
 
-bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface* hw, ros::NodeHandle& root_nh,
+bool SteeredDiffDriveController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh,
                                       ros::NodeHandle& controller_nh)
 {
+  typedef hardware_interface::VelocityJointInterface VelIface;
+  typedef hardware_interface::PositionJointInterface PosIface;
+  typedef hardware_interface::JointStateInterface StateIface;
+
+  // get multiple types of hardware_interface
+  VelIface *vel_joint_if = robot_hw->get<VelIface>(); // vel for wheels
+  PosIface *pos_joint_if = robot_hw->get<PosIface>(); // pos for steers
+
   const std::string complete_ns = controller_nh.getNamespace();
   std::size_t id = complete_ns.find_last_of("/");
   name_ = complete_ns.substr(id + 1);
@@ -357,9 +365,9 @@ bool SteeredDiffDriveController::init(hardware_interface::JointCommandInterface*
     ROS_INFO_STREAM_NAMED(name_, "Adding left wheel with joint name: " << left_wheel_names[i]
                                                                        << " and right wheel with joint name: "
                                                                        << right_wheel_names[i]);
-    left_wheel_joints_[i] = hw->getHandle(left_wheel_names[i]);          // throws on failure
-    right_wheel_joints_[i] = hw->getHandle(right_wheel_names[i]);        // throws on failure
-    steering_wheel_joints_[i] = hw->getHandle(steering_wheel_names[i]);  // throws on failure
+    left_wheel_joints_[i] = vel_joint_if->getHandle(left_wheel_names[i]);          // throws on failure
+    right_wheel_joints_[i] = vel_joint_if->getHandle(right_wheel_names[i]);        // throws on failure
+    steering_wheel_joints_[i] = pos_joint_if->getHandle(steering_wheel_names[i]);  // throws on failure
   }
 
   sub_command_ = controller_nh.subscribe("cmd_vel", 1, &SteeredDiffDriveController::cmdVelCallback, this);

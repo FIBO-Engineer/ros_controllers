@@ -43,7 +43,7 @@
 #pragma once
 
 #include <control_msgs/JointTrajectoryControllerState.h>
-#include <controller_interface/controller.h>
+#include <controller_interface/multi_interface_controller.h>
 #include <steered_diff_drive_controller/SteeredDiffDriveControllerConfig.h>
 #include <steered_diff_drive_controller/odometry.h>
 #include <steered_diff_drive_controller/speed_limiter.h>
@@ -68,7 +68,8 @@ namespace steered_diff_drive_controller
  *  - a wheel collision geometry is a cylinder or sphere in the urdf
  *  - a wheel joint frame center's vertical projection on the floor must lie within the contact patch
  */
-class SteeredDiffDriveController : public controller_interface::Controller<hardware_interface::JointCommandInterface>
+class SteeredDiffDriveController : public controller_interface::MultiInterfaceController<hardware_interface::VelocityJointInterface, 
+                  					hardware_interface::PositionJointInterface>
 {
 public:
   SteeredDiffDriveController();
@@ -79,7 +80,8 @@ public:
    * \param root_nh       Node handle at root namespace
    * \param controller_nh Node handle inside the controller namespace
    */
-  bool init(hardware_interface::JointCommandInterface* hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+  bool init(//hardware_interface::VelocityJointInterface *hw,
+  			hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
 
   /**
    * \brief Updates controller, i.e. computes the odometry and sets the new velocity commands
