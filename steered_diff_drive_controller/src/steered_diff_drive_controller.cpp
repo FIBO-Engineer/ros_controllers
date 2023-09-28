@@ -507,7 +507,7 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   // Compute wheels velocities:
   const double vel_left = (curr_cmd.lin - curr_cmd.ang * ws / 2.0) / lwr;
   const double vel_right = (curr_cmd.lin + curr_cmd.ang * ws / 2.0) / rwr;
-  const double pos_steering = atan2(steering_wheel_length_ * curr_cmd.ang, curr_cmd.lin);
+  const double pos_steering = atan(steering_wheel_length_ * curr_cmd.ang / curr_cmd.lin);
 
   // Set wheels velocities:
   // BIG TODO: Should wait for wheel to be within tolerance before moving
