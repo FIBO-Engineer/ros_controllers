@@ -186,7 +186,7 @@ bool SteeredDiffDriveController::init(hardware_interface::RobotHW* robot_hw, ros
   std::vector<std::string> left_wheel_names, right_wheel_names, steering_wheel_names;
   if (!getWheelNames(controller_nh, "left_wheel", left_wheel_names) ||
       !getWheelNames(controller_nh, "right_wheel", right_wheel_names) ||
-      !getWheelNames(controller_nh, "steering_wheel", right_wheel_names))
+      !getWheelNames(controller_nh, "steering_wheel", steering_wheel_names))
   {
     return false;
   }
