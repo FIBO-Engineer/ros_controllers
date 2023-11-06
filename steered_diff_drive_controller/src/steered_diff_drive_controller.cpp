@@ -371,6 +371,7 @@ bool SteeredDiffDriveController::init(hardware_interface::RobotHW* robot_hw, ros
   }
 
   sub_command_ = controller_nh.subscribe("cmd_vel", 1, &SteeredDiffDriveController::cmdVelCallback, this);
+  sub_ackermann_ = controller_nh.subscribe("ackermann_vel", 1, &SteeredDiffDriveController::ackermannDriveCallback, this);
 
   // Initialize dynamic parameters
   DynamicParams dynamic_params;
@@ -440,6 +441,7 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
     right_pos /= wheel_joints_size_;
 
     // Estimate linear and angular velocity using joint information
+    // TODO: Check this, we can use ackermann kineatics to calculate instead.
     odometry_.update(left_pos, right_pos, time);
   }
 
@@ -507,10 +509,10 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   // Compute wheels velocities:
   const double vel_left = (curr_cmd.lin - curr_cmd.ang * ws / 2.0) / lwr;
   const double vel_right = (curr_cmd.lin + curr_cmd.ang * ws / 2.0) / rwr;
-  const double pos_steering = atan(steering_wheel_length_ * curr_cmd.ang/(curr_cmd.lin + 1e-9));
+  const double pos_steering = curr_cmd.steering;
 
   // Set wheels velocities:
-  // BIG TODO: Should wait for wheel to be within tolerance before moving
+  // BIG TODO: Test the wait for wheel to be within tolerance before moving
 
   double curr_steering_angle = 0.0;
   for (size_t i = 0; i < steering_wheel_joints_.size(); i++)
@@ -586,8 +588,10 @@ void SteeredDiffDriveController::cmdVelCallback(const geometry_msgs::Twist& comm
       return;
     }
 
-    command_struct_.ang = command.angular.z;
+
     command_struct_.lin = command.linear.x;
+    command_struct_.ang = command.angular.z;
+    command_struct_.steering = atan(steering_wheel_length_ * command_struct_.ang/(command_struct_.lin + 1e-9));
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
     ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
@@ -600,6 +604,45 @@ void SteeredDiffDriveController::cmdVelCallback(const geometry_msgs::Twist& comm
     ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
   }
 }
+
+void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::AckermannDrive& command)
+{
+  if (isRunning())
+  {
+    // check that we don't have multiple publishers on the command topic
+    if (!allow_multiple_cmd_vel_publishers_ && sub_command_.getNumPublishers() > 1)
+    {
+      ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, name_,
+                                      "Detected " << sub_command_.getNumPublishers()
+                                                  << " publishers. Only 1 publisher is allowed. Going to brake.");
+      brake();
+      return;
+    }
+
+    if (!std::isfinite(command.speed) || !std::isfinite(command.steering_angle))
+    {
+      ROS_WARN_THROTTLE(1.0, "Received NaN in speed command and steering angle. Ignoring.");
+      return;
+    }
+
+    // command_struct_.ang = command.angular.z;
+    command_struct_.lin = command.speed;
+    command_struct_.steering = command.steering_angle;
+    command_struct_.ang = tan(command_struct_.steering) / steering_wheel_length_; 
+    command_struct_.stamp = ros::Time::now();
+    command_.writeFromNonRT(command_struct_);
+    ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
+                                      // << "Ang: " << command_struct_.ang << ", "
+                                      << "Linear Velocity: " << command_struct_.lin << ", "
+                                      << "Steering Position: " << command_struct_.steering << ", "
+                                      << "Stamp: " << command_struct_.stamp);
+  }
+  else
+  {
+    ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+  }
+}
+
 
 bool SteeredDiffDriveController::getWheelNames(ros::NodeHandle& controller_nh, const std::string& wheel_param,
                                                std::vector<std::string>& wheel_names)

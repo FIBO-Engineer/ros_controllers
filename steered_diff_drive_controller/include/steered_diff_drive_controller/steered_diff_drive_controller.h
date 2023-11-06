@@ -45,6 +45,7 @@
 #include <control_msgs/JointTrajectoryControllerState.h>
 #include <controller_interface/multi_interface_controller.h>
 #include <steered_diff_drive_controller/SteeredDiffDriveControllerConfig.h>
+#include <ackermann_msgs/AckermannDrive.h>
 #include <steered_diff_drive_controller/odometry.h>
 #include <steered_diff_drive_controller/speed_limiter.h>
 #include <dynamic_reconfigure/server.h>
@@ -131,15 +132,17 @@ private:
   {
     double lin;
     double ang;
+    double steering;
     ros::Time stamp;
 
-    Commands() : lin(0.0), ang(0.0), stamp(0.0)
+    Commands() : lin(0.0), ang(0.0), steering(0.0), stamp(0.0)
     {
     }
   };
   realtime_tools::RealtimeBuffer<Commands> command_;
   Commands command_struct_;
   ros::Subscriber sub_command_;
+  ros::Subscriber sub_ackermann_;
 
   /// Publish executed commands
   std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
@@ -265,6 +268,13 @@ private:
    * \param command Velocity command message (twist)
    */
   void cmdVelCallback(const geometry_msgs::Twist& command);
+
+  /**
+   * \brief AckermannVelocity command callback
+   * \param command AckermannDrive message (AckermannDrive)
+   */
+  void ackermannDriveCallback(const ackermann_msgs::AckermannDrive& command);
+
 
   /**
    * \brief Get the wheel names from a wheel param
