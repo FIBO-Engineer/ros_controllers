@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/noetic/include/**",
+        "/home/oak/far_ws/src/ros_dynamixel_driver/include/**",
+        "/home/oak/far_ws/src/ros_smartris_driver/include/**",
+        "/home/oak/far_ws/src/ros_controllers/steered_diff_drive_controller/include/**",
+        "/usr/include/**",
+        "/home/oak/far_ws/devel/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
