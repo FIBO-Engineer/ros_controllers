@@ -5,6 +5,7 @@ project(steered_diff_drive_controller)
 find_package(catkin REQUIRED COMPONENTS
     controller_interface
     control_msgs
+    ackermann_msgs
     dynamic_reconfigure
     geometry_msgs
     hardware_interface
@@ -25,6 +26,7 @@ catkin_package(
   CATKIN_DEPENDS
     controller_interface
     control_msgs
+    ackermann_msgs
     dynamic_reconfigure
     geometry_msgs
     hardware_interface
