@@ -590,7 +590,8 @@ void SteeredDiffDriveController::cmdVelCallback(const geometry_msgs::Twist& comm
 
 
     command_struct_.lin = command.linear.x;
-    command_struct_.ang = command.angular.z;
+    // command_struct_.ang = command.angular.z;
+    command_struct_.ang = command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
     command_struct_.steering = atan(steering_wheel_length_ * command_struct_.ang/(command_struct_.lin + 1e-9));
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
