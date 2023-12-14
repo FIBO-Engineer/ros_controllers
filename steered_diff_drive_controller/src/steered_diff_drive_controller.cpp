@@ -640,7 +640,7 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
     command_struct_.ang = command.speed * rotational_multiplier_ * tan(steering_wheel_length_) / denom;
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
-    ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
+    ROS_INFO_STREAM_NAMED(name_, "Added values to command. "
                                       // << "Ang: " << command_struct_.ang << ", "
                                       << "Linear Velocity: " << command_struct_.lin << ", "
                                       << "Steering Position: " << command_struct_.steering << ", "
