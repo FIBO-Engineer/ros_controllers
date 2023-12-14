@@ -150,6 +150,7 @@ SteeredDiffDriveController::SteeredDiffDriveController()
   : open_loop_(false)
   , use_steering_tolerance_(false)
   , steering_tolerance_(0.1)
+  , rotational_multiplier_(3.0)
   , command_struct_()
   , wheel_separation_(0.0)
   , wheel_radius_(0.0)
@@ -215,6 +216,10 @@ bool SteeredDiffDriveController::init(hardware_interface::RobotHW* robot_hw, ros
   controller_nh.param("open_loop", open_loop_, open_loop_);
   controller_nh.param("use_steering_tolerance", use_steering_tolerance_, use_steering_tolerance_);
   controller_nh.param("steering_tolerance", steering_tolerance_, steering_tolerance_);
+
+  // Since angular velocity is not defined, speed is meant to from "shape" from linear to rotational and vice versa.
+  // We can know the max_angular_velocity from rotational_multiplier * linear_velocity 
+  controller_nh.param("rotational_multiplier", rotational_multiplier_, rotational_multiplier_);
 
   controller_nh.param("wheel_separation_multiplier", wheel_separation_multiplier_, wheel_separation_multiplier_);
   ROS_INFO_STREAM_NAMED(name_, "Wheel separation will be multiplied by " << wheel_separation_multiplier_ << ".");
@@ -590,8 +595,8 @@ void SteeredDiffDriveController::cmdVelCallback(const geometry_msgs::Twist& comm
 
 
     command_struct_.lin = command.linear.x;
-    // command_struct_.ang = command.angular.z;
-    command_struct_.ang = command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
+    command_struct_.ang = command.angular.z; // teleop_twist should implement command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
+    // command_struct_.ang = command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
     command_struct_.steering = atan(steering_wheel_length_ * command_struct_.ang/(command_struct_.lin + 1e-9));
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
@@ -627,6 +632,7 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
     }
 
     // command_struct_.ang = command.angular.z;
+
     command_struct_.lin = command.speed;
     command_struct_.steering = command.steering_angle;
     command_struct_.ang = command.speed * tan(command_struct_.steering) / steering_wheel_length_; 
