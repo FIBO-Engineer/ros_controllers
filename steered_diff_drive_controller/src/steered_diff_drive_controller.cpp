@@ -150,7 +150,7 @@ SteeredDiffDriveController::SteeredDiffDriveController()
   : open_loop_(false)
   , use_steering_tolerance_(false)
   , steering_tolerance_(0.1)
-  , rotational_multiplier_(3.0)
+  , rotational_multiplier_(10.0)
   , command_struct_()
   , wheel_separation_(0.0)
   , wheel_radius_(0.0)
@@ -633,16 +633,16 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
 
     // command_struct_.ang = command.angular.z;
 
-    double denom = sqrt(pow(tan(steering_wheel_length_), 2) + pow(steering_wheel_length_ * rotational_multiplier_, 2));
-
-    command_struct_.lin = command.speed * steering_wheel_length_ * rotational_multiplier_ / denom;
+    double denom = sqrt(pow(tan(command.steering_angle), 2) + pow(steering_wheel_length_ * rotational_multiplier_, 2));
+    double num = command.speed * steering_wheel_length_ * rotational_multiplier_;
+    command_struct_.lin = num / denom;
     command_struct_.steering = command.steering_angle;
-    command_struct_.ang = command.speed * rotational_multiplier_ * tan(steering_wheel_length_) / denom;
+    command_struct_.ang = command.speed * rotational_multiplier_ * tan(command.steering_angle) / denom;
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
-    ROS_INFO_STREAM_NAMED(name_, "Added values to command. "
+    ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
                                       // << "Ang: " << command_struct_.ang << ", "
-                                      << "Linear Velocity: " << command_struct_.lin << ", "
+                                      << "Linear Velocity: " << num << "/" << denom << ", "
                                       << "Steering Position: " << command_struct_.steering << ", "
                                       << "Stamp: " << command_struct_.stamp);
   }
