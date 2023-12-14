@@ -4,20 +4,22 @@ on:
   push:
     branches:
       - noetic-devel
-  schedule:
-    # Run every morning to detect flakiness and broken dependencies
-    - cron: '17 8 * * *'
 
+env:
+  DOCKER_USER: Engineer
+  DOCKER_PASSWORD: P@ssw0rd
+  DOCKER_REGISTRY: https://docker.fibo.kmutt.ac.th
+  IMAGE_NAME: docker.fibo.kmutt.ac.th/ros_controllers
+  TAG_NAME: latest
 jobs:
-  industrial_ci:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env:
-          - {ROS_DISTRO: noetic, ROS_REPO: main}
-          - {ROS_DISTRO: noetic, ROS_REPO: testing}
-          - {ROS_DISTRO: noetic, UPSTREAM_WORKSPACE: "https://raw.githubusercontent.com/ros-controls/ros_control/$ROS_DISTRO-devel/ros_control.rosinstall -ros_controllers"}
+  push-image-to-fibo-docker-hub:  # job name
+    runs-on: ubuntu-latest  # runner name : (ubuntu latest version) 
     steps:
-      - uses: actions/checkout@v1
-      - uses: ros-industrial/industrial_ci@master
-        env: ${{matrix.env}}
+    - uses: actions/checkout@v4 # first action : checkout source code
+    - name: docker login
+      run: | # log into docker hub account
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD $DOCKER_REGISTRY
+    - name: Build the Docker image # push The image to the docker hub
+      run: docker build . --file Dockerfile --tag $IMAGE_NAME:$TAG_NAME
+    - name: Docker Push
+      run: docker push $IMAGE_NAME:$TAG_NAME

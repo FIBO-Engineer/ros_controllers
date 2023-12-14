@@ -168,6 +168,9 @@ private:
   /// And, within which bound
   double steering_tolerance_;
 
+  // Energy Shaping
+  double rotational_multiplier_;
+
   // Distance from front pair of wheels to the rear steering wheel
   double steering_wheel_length_;
 
