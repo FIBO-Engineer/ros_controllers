@@ -633,7 +633,7 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
 
     // command_struct_.ang = command.angular.z;
 
-    double denom = sqrt(pow(tan(command.steering_angle), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2));
+    double denom = sqrt(pow(tan(command.steering_angle), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2) + 1e-9);
     double num = command.speed * steering_axle_length_ * rotational_multiplier_;
     command_struct_.lin = num / denom;
     command_struct_.steering = command.steering_angle;
