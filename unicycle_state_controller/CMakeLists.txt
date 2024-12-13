@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   roscpp
   sensor_msgs
-  nav_mags
+  nav_msgs
 )
 
 find_package(Boost REQUIRED)
@@ -22,6 +22,7 @@ catkin_package(
     realtime_tools
     roscpp
     sensor_msgs
+    nav_msgs
   LIBRARIES
     ${PROJECT_NAME}
   INCLUDE_DIRS
