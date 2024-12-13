@@ -1,0 +1,6 @@
+unicycle_state_controller:
+  type: unicycle_state_controller/UnicycleStateController
+  steering_joint: "steering_axle"
+  drive_joint: "amt21_joint"
+  publish_rate: 20
+  

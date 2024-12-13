@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- load configuration -->
+  <rosparam command="load" file="$(find unicycle_state_controller)/unicycle_state_controller.yaml" />
+
+  <!-- spawn controller -->
+  <node name="unicycle_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen" args="unicycle_state_controller" />
+</launch>

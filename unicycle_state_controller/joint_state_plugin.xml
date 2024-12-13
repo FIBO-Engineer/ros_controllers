@@ -1,0 +1,7 @@
+<library path="libunicycle_state_controller">
+  <class name="unicycle_state_controller/UnicycleStateController" type="unicycle_state_controller::UnicycleStateController" base_class_type="controller_interface::ControllerBase">
+  <description>
+    The unicycle state controller publishes the odometry message. The unicycle state controller expects a JointStateInterface type of hardware interface.
+  </description>
+  </class>
+</library>
