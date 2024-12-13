@@ -70,6 +70,7 @@ namespace joint_state_controller
     realtime_pub_.reset(new realtime_tools::RealtimePublisher<sensor_msgs::JointState>(root_nh, "joint_states", 4));
 
     // get joints and allocate message
+    joint_state_.clear();
     for (unsigned i=0; i<num_hw_joints_; i++){
       joint_state_.push_back(hw->getHandle(joint_names[i]));
       realtime_pub_->msg_.name.push_back(joint_names[i]);
@@ -79,13 +80,23 @@ namespace joint_state_controller
     }
     addExtraJoints(controller_nh, realtime_pub_->msg_);
 
+    pub_time_initialized_=false;
+
     return true;
   }
 
   void JointStateController::starting(const ros::Time& time)
   {
-    // initialize time
-    last_publish_time_ = time;
+    // initialize time exactly once, to maintain publish rate through controller resets
+    if (!pub_time_initialized_)
+    {
+      try {
+        last_publish_time_ = time - ros::Duration(1.001/publish_rate_); //ensure publish on first cycle
+      } catch(std::runtime_error& ex) { // negative ros::Time is not allowed
+        last_publish_time_ = ros::Time::MIN;
+      }
+      pub_time_initialized_ = true;
+    }
   }
 
   void JointStateController::update(const ros::Time& time, const ros::Duration& /*period*/)
@@ -131,7 +142,6 @@ namespace joint_state_controller
       ROS_ERROR("Extra joints specification is not an array. Ignoring.");
       return;
     }
-
     for(std::size_t i = 0; i < list.size(); ++i)
     {
       XmlRpc::XmlRpcValue& elem = list[i];

@@ -2,6 +2,17 @@
 Changelog for package joint_state_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.0 (2024-05-22)
+-------------------
+* Fix uncaught exception in joint_state_controller (`#630 <https://github.com/ros-controls/ros_controllers/issues/630>`_)
+* add flag controlling init of last_publish_time_ (`#617 <https://github.com/ros-controls/ros_controllers/pull/617`_)
+* Contributors: Bryan Stuurman, Robert Haschke, Dr Denis
+
+0.21.2 (2023-09-03)
+-------------------
+* [joint_state_controller] clear joint_state\_ before assignment
+* Contributors: Cong Liu
+
 0.21.1 (2023-01-31)
 -------------------
 * Don't hardcode plugin library path

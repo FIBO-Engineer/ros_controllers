@@ -2,6 +2,14 @@
 Changelog for package rqt_joint_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.22.0 (2024-05-22)
+-------------------
+
+0.21.2 (2023-09-03)
+-------------------
+* change to setuptools in accordance with migration guide
+* Contributors: Arne Hitzmann
+
 0.21.1 (2023-01-31)
 -------------------
 
