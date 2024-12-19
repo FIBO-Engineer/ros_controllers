@@ -165,7 +165,7 @@ namespace unicycle_state_controller
         return;
 
       // Estimate linear and angular velocity using joint information
-      ROS_INFO("drive_pos: %f, steering_pos: %f, Time: %f", drive_pos, steering_pos, time.toSec());
+      ROS_INFO_ONCE("drive_pos: %f, steering_pos: %f, Time: %f", drive_pos, steering_pos, time.toSec());
       odometry_.update(drive_pos, steering_pos, time);
 
       if (last_publish_time_ + ros::Duration(1.0/publish_rate_) < time)
