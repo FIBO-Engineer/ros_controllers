@@ -41,6 +41,7 @@ include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME}
   src/unicycle_state_controller.cpp
+  src/odometry.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

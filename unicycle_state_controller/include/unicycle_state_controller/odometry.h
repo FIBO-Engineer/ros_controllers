@@ -143,7 +143,7 @@ namespace unicycle_state_controller
      * \brief Sets the wheel parameters: radius
      * \param wheel_radius  Wheel radius [m]
      */
-    void setWheelParams(double wheel_radius);
+    void setWheelParams(double wheel_separation_h, double wheel_radius);
 
     /**
      * \brief Velocity rolling window size setter
@@ -189,10 +189,12 @@ namespace unicycle_state_controller
     double angular_; // [rad/s]
 
     /// Wheel kinematic parameters [m]:
+    double wheel_separation_h_;
     double wheel_radius_;
 
     /// Previous wheel position/state [m]:
     double drive_dist_old_pos_;
+    double steering_old_pos_;
     
     /// Rolling mean accumulators for the linar and angular velocities:
     size_t velocity_rolling_window_size_;

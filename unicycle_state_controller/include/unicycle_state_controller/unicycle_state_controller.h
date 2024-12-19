@@ -104,6 +104,7 @@ private:
   bool enable_odom_tf_;
 
   Odometry odometry_;
+  double wheel_separation_h_;
   double wheel_radius_;
   ros::Time last_publish_time_;
   double publish_rate_;

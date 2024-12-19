@@ -3,4 +3,7 @@ unicycle_state_controller:
   steering_joint: "steering_axle"
   drive_joint: "amt21_joint"
   publish_rate: 20
-  
+  pose_covariance_diagonal : [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+  twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+  wheel_separation_h: 0.190
+  wheel_radius: 0.100

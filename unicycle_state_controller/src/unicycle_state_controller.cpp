@@ -59,11 +59,11 @@ namespace unicycle_state_controller
       return false;
     }
 
-    if (!controller_nh.getParam("wheel_radius", wheel_radius_)){
-      ROS_ERROR("Parameter 'wheel_radius' not set");
+    if (!controller_nh.getParam("wheel_separation_h", wheel_separation_h_) || !controller_nh.getParam("wheel_radius", wheel_radius_)){
+      ROS_ERROR("Parameter 'wheel_separation_h' or 'wheel_radius' not set");
       return false;
     }
-    odometry_.setWheelParams(wheel_radius_);
+    odometry_.setWheelParams(wheel_separation_h_, wheel_radius_);
 
     int velocity_rolling_window_size = 5;
     controller_nh.param("velocity_rolling_window_size", velocity_rolling_window_size, velocity_rolling_window_size);
@@ -165,6 +165,7 @@ namespace unicycle_state_controller
         return;
 
       // Estimate linear and angular velocity using joint information
+      ROS_INFO("drive_pos: %f, steering_pos: %f, Time: %f", drive_pos, steering_pos, time.toSec());
       odometry_.update(drive_pos, steering_pos, time);
 
       if (last_publish_time_ + ros::Duration(1.0/publish_rate_) < time)
@@ -205,4 +206,4 @@ namespace unicycle_state_controller
 
 }
 
-PLUGINLIB_EXPORT_CLASS( unicycle_state_controller::UnicycleStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(unicycle_state_controller::UnicycleStateController, controller_interface::ControllerBase)

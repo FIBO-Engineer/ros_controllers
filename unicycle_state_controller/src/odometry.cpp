@@ -52,7 +52,9 @@ namespace unicycle_state_controller
   , heading_(0.0)
   , linear_(0.0)
   , angular_(0.0)
+  , wheel_separation_h_(0.0)
   , wheel_radius_(0.0)
+  , drive_dist_old_pos_(0.0)
   , velocity_rolling_window_size_(velocity_rolling_window_size)
   , linear_acc_(RollingWindow::window_size = velocity_rolling_window_size)
   , angular_acc_(RollingWindow::window_size = velocity_rolling_window_size)
@@ -70,12 +72,12 @@ namespace unicycle_state_controller
   bool Odometry::update(double drive_pos, double steering_pos, const ros::Time &time)
   {
     const double drive_dist_cur_pos = drive_pos * wheel_radius_;
-    const double drive_dist_est_vel = drive_dist_cur_pos - drive_dist_old_pos_;
+    const double diff_drive_dist = drive_dist_cur_pos - drive_dist_old_pos_;
 
     drive_dist_old_pos_ = drive_dist_cur_pos;
 
-    const double linear = drive_dist_cur_pos;
-    const double angular = steering_pos;
+    const double linear = diff_drive_dist * cos(steering_pos);
+    const double angular = sin(steering_pos) * diff_drive_dist / wheel_separation_h_;
 
     /// Integrate odometry:
     integrate_fun_(linear, angular);
@@ -109,8 +111,9 @@ namespace unicycle_state_controller
     integrate_fun_(linear * dt, angular * dt);
   }
 
-  void Odometry::setWheelParams(double wheel_radius)
+  void Odometry::setWheelParams(double wheel_separation_h, double wheel_radius)
   {
+    wheel_separation_h_ = wheel_separation_h;
     wheel_radius_  = wheel_radius;
   }
 
