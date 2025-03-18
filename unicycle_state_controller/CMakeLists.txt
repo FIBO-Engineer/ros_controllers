@@ -79,8 +79,8 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 # Install plugins
-install(FILES joint_state_plugin.xml
-              config/joint_state_controller.yaml
-              launch/joint_state_controller.launch
+install(FILES unicycle_state_plugin.xml
+              config/unicycle_state_controller.yaml
+              launch/unicycle_state_controller.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
