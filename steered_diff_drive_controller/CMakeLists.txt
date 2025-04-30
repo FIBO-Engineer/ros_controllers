@@ -74,6 +74,6 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 # Install plugins
-install(FILES steered_drive_controller_plugins.xml
+install(FILES steered_diff_drive_controller_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
