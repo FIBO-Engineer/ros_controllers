@@ -6,4 +6,4 @@ unicycle_state_controller:
   pose_covariance_diagonal : [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
   twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
   wheel_separation_h: 0.190
-  wheel_radius: 0.100
+  wheel_radius: 0.050
