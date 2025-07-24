@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Start Fake robot hardware for test -->
+  <node name="robot_hardware" pkg="ackermann_steering_controller" type="ackermann_steering_controller_ackermann_steering_bot" />
+
+  <!-- Load common test configuration -->
+  <rosparam command="load" file="$(find ackermann_steering_controller)/test/ackermann_steering_controller_steering_limits_test/ackermann_steering_bot_steering_limits.yaml" />
+
+  <!-- Load ros_control controller -->
+  <include file="$(find ackermann_steering_controller)/test/common/launch/ackermann_steering_controller_plugins.launch" />
+
+  <!-- Start controller manager which will bring up the ros_control stack -->
+  <include file="$(find ackermann_steering_controller)/test/common/launch/ackermann_steering_controller.launch" />
+
+  <!-- Run tests -->
+  <test test-name="ackermann_steering_controller_steering_limits_test"
+        pkg="ackermann_steering_controller"
+        type="ackermann_steering_controller_steering_limits_test"
+        time-limit="80" />
+
+</launch>
