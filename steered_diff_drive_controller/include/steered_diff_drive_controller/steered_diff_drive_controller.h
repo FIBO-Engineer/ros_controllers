@@ -202,6 +202,7 @@ private:
   Commands last0_cmd_;
   SpeedLimiter limiter_lin_;
   SpeedLimiter limiter_ang_;
+  SpeedLimiter limiter_steering_;
 
   /// Publish limited velocity:
   bool publish_cmd_;
