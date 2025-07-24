@@ -134,8 +134,13 @@ private:
     double ang;
     double steering;
     ros::Time stamp;
+    
+    // Raw Ackermann command data (used for proper kinematic calculation after velocity limiting)
+    bool is_ackermann_cmd;
+    double ackermann_speed;
+    double ackermann_steering_angle;
 
-    Commands() : lin(0.0), ang(0.0), steering(0.0), stamp(0.0)
+    Commands() : lin(0.0), ang(0.0), steering(0.0), stamp(0.0), is_ackermann_cmd(false), ackermann_speed(0.0), ackermann_steering_angle(0.0)
     {
     }
   };
@@ -202,6 +207,7 @@ private:
   Commands last0_cmd_;
   SpeedLimiter limiter_lin_;
   SpeedLimiter limiter_ang_;
+  SpeedLimiter limiter_steering_;
 
   /// Publish limited velocity:
   bool publish_cmd_;
