@@ -513,6 +513,20 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
   limiter_steering_.limit(curr_cmd.steering, last0_cmd_.steering, last1_cmd_.steering, cmd_dt);
 
+  // For Ackermann commands, recalculate linear and angular velocities based on limited steering angle
+  if (curr_cmd.is_ackermann_cmd)
+  {
+    double denom = sqrt(pow(tan(curr_cmd.steering), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2) + 1e-9);
+    double num = curr_cmd.ackermann_speed * steering_axle_length_ * rotational_multiplier_;
+    curr_cmd.lin = num / denom;
+    curr_cmd.ang = curr_cmd.ackermann_speed * rotational_multiplier_ * tan(curr_cmd.steering) / denom;
+    
+    ROS_DEBUG_STREAM_NAMED(name_, "Recalculated Ackermann kinematics after steering limiting. "
+                                      << "Limited steering: " << curr_cmd.steering << ", "
+                                      << "Calculated linear: " << curr_cmd.lin << ", "
+                                      << "Calculated angular: " << curr_cmd.ang);
+  }
+
   last1_cmd_ = last0_cmd_;
   last0_cmd_ = curr_cmd;
 
@@ -608,6 +622,7 @@ void SteeredDiffDriveController::cmdVelCallback(const geometry_msgs::Twist& comm
     }
 
 
+    command_struct_.is_ackermann_cmd = false;
     command_struct_.lin = command.linear.x;
     command_struct_.ang = command.angular.z; // teleop_twist should implement command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
     // command_struct_.ang = command_struct_.lin >= 0 ? command.angular.z:-command.angular.z;
@@ -645,19 +660,16 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
       return;
     }
 
-    // command_struct_.ang = command.angular.z;
-
-    double denom = sqrt(pow(tan(command.steering_angle), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2) + 1e-9);
-    double num = command.speed * steering_axle_length_ * rotational_multiplier_;
-    command_struct_.lin = num / denom;
-    command_struct_.steering = command.steering_angle;
-    command_struct_.ang = command.speed * rotational_multiplier_ * tan(command.steering_angle) / denom;
+    // Store raw Ackermann command for kinematic calculation after velocity limiting
+    command_struct_.is_ackermann_cmd = true;
+    command_struct_.ackermann_speed = command.speed;
+    command_struct_.ackermann_steering_angle = command.steering_angle;
+    command_struct_.steering = command.steering_angle;  // Initial steering value for limiting
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
-    ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
-                                      // << "Ang: " << command_struct_.ang << ", "
-                                      << "Linear Velocity: " << num << "/" << denom << ", "
-                                      << "Steering Position: " << command_struct_.steering << ", "
+    ROS_DEBUG_STREAM_NAMED(name_, "Added Ackermann values to command. "
+                                      << "Speed: " << command.speed << ", "
+                                      << "Steering Angle: " << command.steering_angle << ", "
                                       << "Stamp: " << command_struct_.stamp);
   }
   else
