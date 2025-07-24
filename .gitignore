@@ -13,3 +13,7 @@
 
 # OSX Files
 .DS_Store
+
+# Build artifacts
+build/
+*/build/
