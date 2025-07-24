@@ -361,6 +361,10 @@ namespace ackermann_steering_controller{
     // Register starting time used to keep fixed rate
     last_state_publish_time_ = time;
 
+    // Initialize steering command history
+    last1_steer_cmd_ = 0.0;
+    last0_steer_cmd_ = 0.0;
+
     odometry_.init(time);
   }
 
