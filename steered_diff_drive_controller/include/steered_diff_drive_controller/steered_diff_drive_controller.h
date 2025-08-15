@@ -133,10 +133,11 @@ private:
   {
     double lin;
     double ang;
+    double speed;
     double steering;
     ros::Time stamp;
 
-    Commands() : lin(0.0), ang(0.0), steering(0.0), stamp(0.0)
+    Commands() : lin(0.0), ang(0.0), speed(0.0), steering(0.0), stamp(0.0)
     {
     }
   };

@@ -150,7 +150,7 @@ SteeredDiffDriveController::SteeredDiffDriveController()
   : open_loop_(false)
   , use_steering_tolerance_(false)
   , steering_tolerance_(0.1)
-  , rotational_multiplier_(10.0)
+  , rotational_multiplier_(3.0)
   , command_struct_()
   , wheel_separation_(0.0)
   , wheel_radius_(0.0)
@@ -501,16 +501,26 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   // Brake if cmd_vel has timeout:
   if (dt > cmd_vel_timeout_)
   {
-    curr_cmd.lin = 0.0;
-    curr_cmd.ang = 0.0;
+    // curr_cmd.lin = 0.0;
+    // curr_cmd.ang = 0.0;
+    curr_cmd.speed = 0.0;
+    curr_cmd.steering = 0.0;
   }
 
   // Limit velocities and accelerations:
   const double cmd_dt(period.toSec());
 
-  limiter_lin_.limit(curr_cmd.lin, last0_cmd_.lin, last1_cmd_.lin, cmd_dt);
-  limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
+  // limiter_lin_.limit(curr_cmd.lin, last0_cmd_.lin, last1_cmd_.lin, cmd_dt);
+  // limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
+
+  // Borrow
+  limiter_lin_.limit(curr_cmd.speed, last0_cmd_.speed, last1_cmd_.speed, cmd_dt);
   limiter_steering_.limit(curr_cmd.steering, last0_cmd_.steering, last1_cmd_.steering, cmd_dt);
+
+  double denom = sqrt(pow(tan(curr_cmd.steering), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2) + 1e-6);  
+  double num = curr_cmd.speed * steering_axle_length_ * rotational_multiplier_;
+  curr_cmd.lin = num / denom;
+  curr_cmd.ang = curr_cmd.speed * rotational_multiplier_ * tan(curr_cmd.steering) / denom;
 
   last1_cmd_ = last0_cmd_;
   last0_cmd_ = curr_cmd;
@@ -528,6 +538,8 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
   const double vel_left = (curr_cmd.lin - curr_cmd.ang * ws / 2.0) / lwr;
   const double vel_right = (curr_cmd.lin + curr_cmd.ang * ws / 2.0) / rwr;
   const double pos_steering = curr_cmd.steering;
+
+  // ROS_INFO("%f %f %f %f %f", curr_cmd.speed, curr_cmd.steering, vel_left, vel_right, pos_steering);
 
   // Set wheels velocities:
   // BIG TODO: Test the wait for wheel to be within tolerance before moving
@@ -649,15 +661,16 @@ void SteeredDiffDriveController::ackermannDriveCallback(const ackermann_msgs::Ac
     double denom = sqrt(pow(tan(command.steering_angle), 2) + pow(steering_axle_length_ * rotational_multiplier_, 2) + 1e-9);
     double num = command.speed * steering_axle_length_ * rotational_multiplier_;
     command_struct_.lin = num / denom;
+    command_struct_.speed = command.speed;
     command_struct_.steering = command.steering_angle;
     command_struct_.ang = command.speed * rotational_multiplier_ * tan(command.steering_angle) / denom;
     command_struct_.stamp = ros::Time::now();
     command_.writeFromNonRT(command_struct_);
-    ROS_DEBUG_STREAM_NAMED(name_, "Added values to command. "
-                                      // << "Ang: " << command_struct_.ang << ", "
-                                      << "Linear Velocity: " << num << "/" << denom << ", "
-                                      << "Steering Position: " << command_struct_.steering << ", "
-                                      << "Stamp: " << command_struct_.stamp);
+    // ROS_INFO_STREAM_NAMED(name_, "Added values to command. "
+    //                                   << "Speed: " << command_struct_.speed << ", "
+    //                                   // << "Linear Velocity: " << num << "/" << denom << ", "
+    //                                   << "Steering Position: " << command_struct_.steering << ", "
+    //                                   << "Stamp: " << command_struct_.stamp);
   }
   else
   {
