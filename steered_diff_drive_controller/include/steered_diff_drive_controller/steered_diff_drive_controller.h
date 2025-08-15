@@ -48,6 +48,7 @@
 #include <ackermann_msgs/AckermannDrive.h>
 #include <steered_diff_drive_controller/odometry.h>
 #include <steered_diff_drive_controller/speed_limiter.h>
+#include <steered_diff_drive_controller/position_limiter.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -202,6 +203,7 @@ private:
   Commands last0_cmd_;
   SpeedLimiter limiter_lin_;
   SpeedLimiter limiter_ang_;
+  PositionLimiter limiter_steering_;
 
   /// Publish limited velocity:
   bool publish_cmd_;

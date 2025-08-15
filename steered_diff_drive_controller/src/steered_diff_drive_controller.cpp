@@ -292,6 +292,18 @@ bool SteeredDiffDriveController::init(hardware_interface::RobotHW* robot_hw, ros
   controller_nh.param("angular/z/max_jerk", limiter_ang_.max_jerk, limiter_ang_.max_jerk);
   controller_nh.param("angular/z/min_jerk", limiter_ang_.min_jerk, -limiter_ang_.max_jerk);
 
+  controller_nh.param("steering/has_position_limits", limiter_steering_.has_position_limits,
+                      limiter_steering_.has_position_limits);
+  controller_nh.param("steering/has_velocity_limits", limiter_steering_.has_velocity_limits,
+                      limiter_steering_.has_velocity_limits);
+  controller_nh.param("steering/has_acceleration_limits", limiter_steering_.has_acceleration_limits, limiter_steering_.has_acceleration_limits);
+  controller_nh.param("steering/max_position", limiter_steering_.max_position, limiter_steering_.max_position);
+  controller_nh.param("steering/min_position", limiter_steering_.min_position, -limiter_steering_.max_position);
+  controller_nh.param("steering/max_velocity", limiter_steering_.max_velocity, limiter_steering_.max_velocity);
+  controller_nh.param("steering/min_velocity", limiter_steering_.min_velocity, -limiter_steering_.max_velocity);
+  controller_nh.param("steering/max_acceleration", limiter_steering_.max_acceleration, limiter_steering_.max_acceleration);
+  controller_nh.param("steering/min_acceleration", limiter_steering_.min_acceleration, -limiter_steering_.max_acceleration);
+
   // Publish limited velocity:
   controller_nh.param("publish_cmd", publish_cmd_, publish_cmd_);
 
@@ -498,6 +510,7 @@ void SteeredDiffDriveController::update(const ros::Time& time, const ros::Durati
 
   limiter_lin_.limit(curr_cmd.lin, last0_cmd_.lin, last1_cmd_.lin, cmd_dt);
   limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
+  limiter_steering_.limit(curr_cmd.steering, last0_cmd_.steering, last1_cmd_.steering, cmd_dt);
 
   last1_cmd_ = last0_cmd_;
   last0_cmd_ = curr_cmd;

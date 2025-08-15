@@ -52,6 +52,7 @@ add_library(${PROJECT_NAME}
   src/steered_diff_drive_controller.cpp
   src/odometry.cpp
   src/speed_limiter.cpp
+  src/position_limiter.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
