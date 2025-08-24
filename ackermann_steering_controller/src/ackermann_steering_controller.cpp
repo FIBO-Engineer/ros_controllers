@@ -119,6 +119,8 @@ namespace ackermann_steering_controller{
     , odom_frame_id_("odom")
     , enable_odom_tf_(true)
     , wheel_joints_size_(0)
+    , last1_steer_cmd_(0.0)
+    , last0_steer_cmd_(0.0)
   {
   }
 
@@ -214,6 +216,16 @@ namespace ackermann_steering_controller{
     controller_nh.param("angular/z/min_acceleration"       , limiter_ang_.min_acceleration       , -limiter_ang_.max_acceleration      );
     controller_nh.param("angular/z/max_jerk"               , limiter_ang_.max_jerk               ,  limiter_ang_.max_jerk              );
     controller_nh.param("angular/z/min_jerk"               , limiter_ang_.min_jerk               , -limiter_ang_.max_jerk              );
+
+    controller_nh.param("steering/has_velocity_limits"     , limiter_steer_.has_velocity_limits    , limiter_steer_.has_velocity_limits    );
+    controller_nh.param("steering/has_acceleration_limits" , limiter_steer_.has_acceleration_limits, limiter_steer_.has_acceleration_limits);
+    controller_nh.param("steering/has_jerk_limits"         , limiter_steer_.has_jerk_limits        , limiter_steer_.has_jerk_limits        );
+    controller_nh.param("steering/max_velocity"            , limiter_steer_.max_velocity           ,  limiter_steer_.max_velocity          );
+    controller_nh.param("steering/min_velocity"            , limiter_steer_.min_velocity           , -limiter_steer_.max_velocity          );
+    controller_nh.param("steering/max_acceleration"        , limiter_steer_.max_acceleration       ,  limiter_steer_.max_acceleration      );
+    controller_nh.param("steering/min_acceleration"        , limiter_steer_.min_acceleration       , -limiter_steer_.max_acceleration      );
+    controller_nh.param("steering/max_jerk"                , limiter_steer_.max_jerk               ,  limiter_steer_.max_jerk              );
+    controller_nh.param("steering/min_jerk"                , limiter_steer_.min_jerk               , -limiter_steer_.max_jerk              );
 
     // If either parameter is not available, we need to look up the value in the URDF
     bool lookup_wheel_separation_h = !controller_nh.getParam("wheel_separation_h", wheel_separation_h_);
@@ -326,13 +338,19 @@ namespace ackermann_steering_controller{
     limiter_lin_.limit(curr_cmd.lin, last0_cmd_.lin, last1_cmd_.lin, cmd_dt);
     limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
 
+    // Apply steering velocity limiting
+    double steer_cmd = curr_cmd.ang;
+    limiter_steer_.limit(steer_cmd, last0_steer_cmd_, last1_steer_cmd_, cmd_dt);
+
     last1_cmd_ = last0_cmd_;
     last0_cmd_ = curr_cmd;
+    last1_steer_cmd_ = last0_steer_cmd_;
+    last0_steer_cmd_ = steer_cmd;
 
     // Set Command
     const double wheel_vel = curr_cmd.lin/wheel_radius_; // omega = linear_vel / radius
     rear_wheel_joint_.setCommand(wheel_vel);
-    front_steer_joint_.setCommand(curr_cmd.ang);
+    front_steer_joint_.setCommand(steer_cmd);
 
   }
 
@@ -342,6 +360,10 @@ namespace ackermann_steering_controller{
 
     // Register starting time used to keep fixed rate
     last_state_publish_time_ = time;
+
+    // Initialize steering command history
+    last1_steer_cmd_ = 0.0;
+    last0_steer_cmd_ = 0.0;
 
     odometry_.init(time);
   }

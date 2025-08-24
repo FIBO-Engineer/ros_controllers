@@ -1,0 +1,51 @@
+# Example configuration for Ackermann Steering Controller with steering velocity limits
+
+ackermann_steering_controller:
+  # Joint names (update these to match your robot's URDF)
+  rear_wheel: "rear_wheel_joint"
+  front_steer: "front_steer_joint"
+  
+  # Wheel and steering parameters
+  wheel_radius: 0.1
+  wheel_separation_h: 0.5
+  
+  # Velocity command timeout
+  cmd_vel_timeout: 0.5
+  
+  # Linear velocity limits
+  linear:
+    x:
+      has_velocity_limits: true
+      max_velocity: 2.0        # m/s
+      min_velocity: -1.0       # m/s
+      has_acceleration_limits: true
+      max_acceleration: 1.5    # m/s²
+      min_acceleration: -2.0   # m/s²
+      has_jerk_limits: true
+      max_jerk: 5.0           # m/s³
+      min_jerk: -5.0          # m/s³
+  
+  # Angular velocity limits (robot turning rate)
+  angular:
+    z:
+      has_velocity_limits: true
+      max_velocity: 1.0        # rad/s
+      min_velocity: -1.0       # rad/s
+      has_acceleration_limits: true
+      max_acceleration: 0.5    # rad/s²
+      min_acceleration: -0.5   # rad/s²
+      has_jerk_limits: true
+      max_jerk: 2.0           # rad/s³
+      min_jerk: -2.0          # rad/s³
+  
+  # NEW: Steering velocity limits (steering actuator rate limits)
+  steering:
+    has_velocity_limits: true
+    max_velocity: 2.0          # rad/s - maximum steering angle change rate
+    min_velocity: -2.0         # rad/s - minimum steering angle change rate
+    has_acceleration_limits: true
+    max_acceleration: 4.0      # rad/s² - maximum steering acceleration
+    min_acceleration: -4.0     # rad/s² - minimum steering acceleration
+    has_jerk_limits: true
+    max_jerk: 10.0            # rad/s³ - maximum steering jerk
+    min_jerk: -10.0           # rad/s³ - minimum steering jerk

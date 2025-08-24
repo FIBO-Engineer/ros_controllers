@@ -166,6 +166,9 @@ namespace ackermann_steering_controller{
     Commands last0_cmd_;
     diff_drive_controller::SpeedLimiter limiter_lin_;
     diff_drive_controller::SpeedLimiter limiter_ang_;
+    diff_drive_controller::SpeedLimiter limiter_steer_;
+    double last1_steer_cmd_;
+    double last0_steer_cmd_;
 
   private:
     /**
